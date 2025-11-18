@@ -44,9 +44,10 @@ serve(async (req: Request) => {
 
     const { client_name, symbol, client_wallet, webhook } = validation.data
 
-    const log = createLogger("stablecoin-create")
+    const log = createLogger("stablecoin-create", undefined)
     await log.info("Creating stablecoin", {
       clientId: auth.clientId,
+      clientName: auth.clientName,
       symbol,
     })
 

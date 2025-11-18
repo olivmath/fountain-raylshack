@@ -153,10 +153,11 @@ FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 -- TEST DATA (REMOVE IN PRODUCTION)
 -- ============================================
 
--- INSERT INTO api_keys (client_id, client_name, api_key_hash)
--- VALUES (
---   'test-client-01',
---   'Test Corretora',
---   'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3'
---   -- SHA256 of 'test-api-key-123'
--- );
+INSERT INTO api_keys (client_id, client_name, api_key_hash, is_active)
+VALUES (
+  'test-client-01',
+  'Test Corretora',
+  'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3',
+  true
+);
+-- API Key: test-api-key-123 (SHA256 hash above)
