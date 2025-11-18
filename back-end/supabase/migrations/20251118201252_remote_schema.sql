@@ -1,6 +1,4 @@
--- ============================================
--- STABLECOIN GATEWAY SCHEMA
--- ============================================
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- API Keys (authentication)
 CREATE TABLE api_keys (
@@ -157,7 +155,7 @@ INSERT INTO api_keys (client_id, client_name, api_key_hash, is_active)
 VALUES (
   'test-client-01',
   'Test Corretora',
-  'a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3',
+  'a2e4ab0472c808a1ff2ce147ae4f6cd9ecd8bcc8a49c48350f97e6811ace7464',
   true
 );
 -- API Key: test-api-key-123 (SHA256 hash above)
