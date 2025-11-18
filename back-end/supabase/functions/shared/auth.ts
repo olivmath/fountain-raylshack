@@ -1,7 +1,5 @@
-import { createHash } from "crypto"
 import { getSupabaseClient } from "./supabase-client.ts"
 import { createLogger } from "./logger.ts"
-import type { ApiKey } from "./types.ts"
 
 const logger = createLogger("auth")
 
@@ -13,8 +11,12 @@ export interface AuthResult {
 
 export async function validateApiKey(apiKey: string): Promise<AuthResult> {
   try {
-    // Hash the API key
-    const hash = createHash("sha256").update(apiKey).digest("hex")
+    // Hash the API key using Deno's crypto
+    const encoder = new TextEncoder()
+    const data = encoder.encode(apiKey)
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    const hash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
 
     const supabase = getSupabaseClient()
 

@@ -36,6 +36,7 @@ Thumbs.db
 # Supabase local
 .supabase/
 supabase/.branches/
+supabase/.temp/
 
 # Runtime data
 pids/

@@ -1,4 +1,4 @@
-import { serve } from "std/http/server.ts"
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts"
 import { WithdrawRequestSchema, WithdrawResponse } from "../shared/types.ts"
 import { getSupabaseClient } from "../shared/supabase-client.ts"
 import { createLogger } from "../shared/logger.ts"

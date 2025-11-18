@@ -1,9 +1,8 @@
-import { serve } from "std/http/server.ts"
-import { CreateStablecoinRequestSchema, CreateStablecoinResponse } from "../shared/types.ts"
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts"
 import { getSupabaseClient } from "../shared/supabase-client.ts"
 import { createLogger } from "../shared/logger.ts"
 import { validateApiKey, extractApiKey } from "../shared/auth.ts"
-import { createErrorResponse, createSuccessResponse, AppError, ErrorCode, handleError } from "../shared/error-handler.ts"
+import { createErrorResponse, createSuccessResponse } from "../shared/error-handler.ts"
 import { publishEvent, createDomainEvent } from "../shared/event-publisher.ts"
 
 const logger = createLogger("stablecoin-create")
@@ -17,32 +16,40 @@ serve(async (req: Request) => {
     // Extract and validate API key
     const apiKey = extractApiKey(req)
     if (!apiKey) {
-      return createErrorResponse("Missing x-api-key header", 401, ErrorCode.UNAUTHORIZED)
+      return createErrorResponse("Missing x-api-key header", 401)
     }
 
     const auth = await validateApiKey(apiKey)
     if (!auth.valid) {
-      return createErrorResponse("Invalid API key", 401, ErrorCode.UNAUTHORIZED)
+      return createErrorResponse("Invalid API key", 401)
     }
 
     // Parse request body
-    let body: unknown
+    let body: Record<string, unknown>
     try {
       body = await req.json()
     } catch {
       return createErrorResponse("Invalid JSON body", 400)
     }
 
-    // Validate request schema
-    const validation = CreateStablecoinRequestSchema.safeParse(body)
-    if (!validation.success) {
-      return createErrorResponse(
-        `Validation error: ${validation.error.errors.map((e) => e.message).join(", ")}`,
-        400
-      )
-    }
+    // Validate request manually (simple POC)
+    const client_name = body.client_name as string
+    const symbol = body.symbol as string
+    const client_wallet = body.client_wallet as string
+    const webhook = body.webhook as string
 
-    const { client_name, symbol, client_wallet, webhook } = validation.data
+    if (!client_name || typeof client_name !== "string") {
+      return createErrorResponse("Missing or invalid client_name", 400)
+    }
+    if (!symbol || typeof symbol !== "string" || symbol.length > 10) {
+      return createErrorResponse("Missing or invalid symbol (max 10 chars)", 400)
+    }
+    if (!client_wallet || !client_wallet.match(/^0x[a-fA-F0-9]{40}$/)) {
+      return createErrorResponse("Invalid client_wallet (must be valid Ethereum address)", 400)
+    }
+    if (!webhook || typeof webhook !== "string") {
+      return createErrorResponse("Missing or invalid webhook", 400)
+    }
 
     const log = createLogger("stablecoin-create", undefined)
     await log.info("Creating stablecoin", {
@@ -116,7 +123,7 @@ serve(async (req: Request) => {
       symbol,
     })
 
-    const response: CreateStablecoinResponse = {
+    const response = {
       stablecoin_id: stablecoinId,
       symbol,
       status: "registered",
@@ -126,7 +133,7 @@ serve(async (req: Request) => {
 
     return createSuccessResponse(response, 201)
   } catch (err) {
-    const { response } = await handleError(err)
-    return response
+    console.error("Error creating stablecoin:", err)
+    return createErrorResponse("Internal server error", 500)
   }
 })

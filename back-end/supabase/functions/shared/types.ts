@@ -1,45 +1,6 @@
-import { z } from "zod"
-
 // ============================================
-// VALIDATION SCHEMAS
+// VALIDATION SCHEMAS (removed Zod for POC)
 // ============================================
-
-export const ApiKeySchema = z.string().min(32, "API key must be at least 32 characters")
-
-export const EthereumAddressSchema = z.string().regex(
-  /^0x[a-fA-F0-9]{40}$/,
-  "Invalid Ethereum address"
-)
-
-export const StablecoinSymbolSchema = z
-  .string()
-  .min(1)
-  .max(10)
-  .regex(/^[A-Z0-9-]+$/, "Symbol must contain only uppercase letters, numbers, and hyphens")
-
-export const ClientNameSchema = z.string().min(1).max(255)
-
-export const AmountSchema = z.number().positive("Amount must be positive")
-
-export const PixAddressSchema = z.string().min(1).max(255)
-
-export const WebhookUrlSchema = z.string().url("Must be a valid URL")
-
-export const CreateStablecoinRequestSchema = z.object({
-  client_name: ClientNameSchema,
-  symbol: StablecoinSymbolSchema,
-  client_wallet: EthereumAddressSchema,
-  webhook: WebhookUrlSchema,
-})
-
-export const DepositRequestSchema = z.object({
-  amount: AmountSchema,
-})
-
-export const WithdrawRequestSchema = z.object({
-  amount: AmountSchema,
-  pix_address: PixAddressSchema,
-})
 
 // ============================================
 // DATABASE TYPES
