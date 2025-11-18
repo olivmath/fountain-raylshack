@@ -60,10 +60,12 @@ supabase/
 ├── functions/        # Deno Edge Functions
 └── migrations/       # Database schema migrations
 
-Documentation:
-├── DEPLOYMENT_ROADMAP.md  # Detailed step-by-step deployment guide
-├── SETUP_GUIDE.md         # Development environment setup
-├── ARCHITECTURE.md        # Design patterns and architecture
+docs/
+├── guides/                # Getting started guides
+├── architecture/          # Architecture and design patterns
+├── deployment/            # Deployment and operations
+├── reference/             # Reference documentation
+└── INDEX.md               # Documentation index
 ```
 
 ## Design Patterns
@@ -166,9 +168,11 @@ See [DEPLOYMENT_ROADMAP.md](./DEPLOYMENT_ROADMAP.md) for complete details:
 
 ## Documentation
 
-- [DEPLOYMENT_ROADMAP.md](./DEPLOYMENT_ROADMAP.md) - Step-by-step deployment with baby-steps approach
-- [SETUP_GUIDE.md](./SETUP_GUIDE.md) - Development environment setup and troubleshooting
-- [ARCHITECTURE.md](./ARCHITECTURE.md) - Design patterns, data flows, and design decisions
+See [docs/INDEX.md](./docs/INDEX.md) for complete documentation organized by topic:
+
+- **Getting Started**: [START_HERE.md](./docs/guides/START_HERE.md), [SETUP_GUIDE.md](./docs/guides/SETUP_GUIDE.md)
+- **Deployment**: [DEPLOYMENT_GUIDE.md](./docs/deployment/DEPLOYMENT_GUIDE.md), [DEPLOYMENT_ROADMAP.md](./docs/deployment/DEPLOYMENT_ROADMAP.md)
+- **Architecture**: [ARCHITECTURE.md](./docs/architecture/ARCHITECTURE.md), [EVENT_DRIVEN_IMPLEMENTATION.md](./docs/architecture/EVENT_DRIVEN_IMPLEMENTATION.md)
 
 ## Available Scripts
 
@@ -252,4 +256,4 @@ ISC
 
 ## Support
 
-See [SETUP_GUIDE.md](./SETUP_GUIDE.md) for troubleshooting guide.
+See [docs/guides/SETUP_GUIDE.md](./docs/guides/SETUP_GUIDE.md) for troubleshooting guide, or [docs/INDEX.md](./docs/INDEX.md) for the complete documentation index.
