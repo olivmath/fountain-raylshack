@@ -1,4 +1,4 @@
-import { createClient as createSupabaseClient } from "supabase"
+import { createClient as createSupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
 
 let _client: ReturnType<typeof createSupabaseClient> | null = null
 
