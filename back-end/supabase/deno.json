@@ -1,0 +1,14 @@
+{
+  "imports": {
+    "std/": "https://deno.land/std@0.208.0/",
+    "supabase": "https://esm.sh/@supabase/supabase-js@2.38.4",
+    "viem": "https://esm.sh/viem@2.8.11",
+    "viem/": "https://esm.sh/viem@2.8.11/",
+    "zod": "https://esm.sh/zod@3.22.4",
+    "crypto": "https://deno.land/std@0.208.0/crypto/mod.ts"
+  },
+  "tasks": {
+    "serve": "supabase functions serve",
+    "deploy": "supabase functions deploy"
+  }
+}
