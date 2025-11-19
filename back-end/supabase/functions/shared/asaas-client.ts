@@ -21,7 +21,7 @@ export interface CreateCustomerRequest {
 
 export interface CreatePixCodeRequest {
   billingType: "PIX"
-  customerId: string
+  customer: string
   value: number
   externalReference: string
   description: string
@@ -101,7 +101,7 @@ export class AsaasClient {
       await logger.debug("Creating PIX code", {
         externalReference: request.externalReference,
         value: request.value,
-        customerId: request.customerId,
+        customer: request.customer,
       })
 
       const response = await fetch(`${this.baseUrl}/payments`, {

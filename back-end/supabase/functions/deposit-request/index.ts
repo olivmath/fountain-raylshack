@@ -120,7 +120,7 @@ serve(async (req: Request) => {
 
     const asaasResponse = await asaasClient.createPixCode({
       billingType: "PIX",
-      customerId: stablecoin.asaas_customer_id,
+      customer: stablecoin.asaas_customer_id,
       value: amount,
       externalReference: operationId,
       description: `Stablecoin ${stablecoin.symbol} - Deposit`,
