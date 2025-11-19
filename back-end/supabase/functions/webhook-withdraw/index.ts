@@ -26,7 +26,7 @@ serve(async (req: Request) => {
 
     // Validate signature
     const asaasClient = createAsaasClient()
-    const apiKey = Deno.env.get("ASAAS_WEBHOOK_KEY")
+    const apiKey = Deno.env.get("ASAAS_WEBHOOK_SECRET") || Deno.env.get("ASAAS_WEBHOOK_KEY")
     if (!apiKey) {
       await logger.error("Missing ASAAS_WEBHOOK_KEY")
       return createErrorResponse("Server configuration error", 500)

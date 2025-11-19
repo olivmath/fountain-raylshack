@@ -6,6 +6,17 @@
 // DATABASE TYPES
 // ============================================
 
+import { z } from "zod"
+
+export const DepositRequestSchema = z.object({
+  amount: z.number().positive(),
+})
+
+export const WithdrawRequestSchema = z.object({
+  amount: z.number().positive(),
+  pix_address: z.string().min(1),
+})
+
 export interface ApiKey {
   id: string
   client_id: string
