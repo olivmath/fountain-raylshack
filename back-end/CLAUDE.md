@@ -761,4 +761,4 @@ validateWebhookSignature(JSON.stringify(body), signature)  // Different hash!
 - **Supabase Dashboard:** https://supabase.com/dashboard/project/bzxdqkttnkxqaecaiekt
 - **Local Functions URL:** http://localhost:54321/functions/v1/{function-name}
 - **Production Functions URL:** https://bzxdqkttnkxqaecaiekt.supabase.co/functions/v1/{function-name}
-
+- to memorize

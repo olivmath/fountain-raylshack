@@ -3,10 +3,10 @@ import {
   createWalletClient,
   http,
   parseUnits,
-  privateKeyToAccount,
   type PublicClient,
   type WalletClient,
 } from "https://esm.sh/viem@2.8.11"
+import { privateKeyToAccount } from "https://esm.sh/viem@2.8.11/accounts"
 import { createLogger } from "./logger.ts"
 import { AppError, ErrorCode } from "./error-handler.ts"
 import type { ContractDeployResult, TransactionResult } from "./types.ts"
