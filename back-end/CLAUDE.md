@@ -4,6 +4,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## 📝 RECENT UPDATES (2025-11-18)
+
+### What Changed
+- ✅ **stablecoin-create** now deploys ERC20 tokens immediately on creation
+- ✅ **JWT disabled** - all functions use API key authentication (x-api-key header)
+- ✅ **Blockchain integration** - requires BLOCKCHAIN_RPC_URL, FACTORY_CONTRACT_ADDRESS, OWNER_ADDRESS, OWNER_PRIVATE_KEY, CHAIN_ID
+- ✅ **total_supply** - new required parameter for stablecoin-create
+- ✅ **Event sourcing** - publishes "stablecoin.registered" and "stablecoin.deployed" events
+- ✅ **Git remote updated** - now points to https://github.com/olivmath/fountain.git
+
+### Commits
+```
+7d1b5a5 chore: clean up temporary files and update gitignore
+d7bb5dd feat: implement ERC20 token deployment in stablecoin-create function
+```
+
+### Next Steps (URGENT)
+1. Provide blockchain credentials (Factory address, Owner address, Private key)
+2. Provide Asaas credentials (API key, Webhook key)
+3. Run `supabase secrets set` commands
+4. Deploy remaining functions (deposit-request, withdraw, webhook-deposit, webhook-withdraw)
+
+---
+
 ## PROJECT OVERVIEW
 
 **Rayls Stablecoin Gateway** - A production-ready event-driven system for creating and managing Brazilian reais stablecoins (USDBR equivalent).
@@ -335,6 +359,11 @@ await notifyClient(operationId)
 
 **File:** `.env` (do NOT commit - use .env.example as template)
 
+All variables MUST be set as Supabase secrets:
+```bash
+supabase secrets set KEY=value
+```
+
 ```bash
 # ============================================
 # SUPABASE (Edge Functions + Database)
@@ -344,19 +373,38 @@ SUPABASE_SERVICE_ROLE_KEY=<JWT with service_role>  # Full access
 SUPABASE_ANON_KEY=<JWT with anon role>             # Limited access
 
 # ============================================
-# ASAAS (Brazilian PIX Processor)
+# ASAAS (Brazilian PIX Processor) [REQUIRED]
 # ============================================
 ASAAS_API_KEY=<API token for requests>
 ASAAS_WEBHOOK_KEY=<Secret for signature validation>
 
 # ============================================
-# BLOCKCHAIN (ERC20 Smart Contracts)
+# BLOCKCHAIN (ERC20 Smart Contracts) [REQUIRED]
 # ============================================
-BLOCKCHAIN_RPC_URL=https://sepolia.infura.io/v3/YOUR-ID
-FACTORY_CONTRACT_ADDRESS=0x...     # Factory for deploying/minting
+BLOCKCHAIN_RPC_URL=https://devnet-rpc.rayls.com
+FACTORY_CONTRACT_ADDRESS=0x...     # Factory for deploying/minting ERC20
 OWNER_ADDRESS=0x...                # Admin wallet that signs txs
 OWNER_PRIVATE_KEY=0x...            # Private key (KEEP SECRET!)
-CHAIN_ID=11155111                  # Sepolia testnet
+CHAIN_ID=123123                    # Rayls Devnet (or Sepolia: 11155111)
+```
+
+### Setup Commands
+```bash
+# 1. Configure Blockchain (Required for stablecoin-create)
+supabase secrets set \
+  BLOCKCHAIN_RPC_URL="https://devnet-rpc.rayls.com" \
+  FACTORY_CONTRACT_ADDRESS="0x..." \
+  OWNER_ADDRESS="0x..." \
+  OWNER_PRIVATE_KEY="0x..." \
+  CHAIN_ID="123123"
+
+# 2. Configure Asaas (Required for deposit/withdraw)
+supabase secrets set \
+  ASAAS_API_KEY="..." \
+  ASAAS_WEBHOOK_KEY="..."
+
+# 3. Verify
+supabase secrets list
 ```
 
 ---
@@ -471,17 +519,58 @@ deno task serve
 Test API Key: `test-api-key-123`
 Hash: `a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3`
 
-### Example Request (Create Stablecoin)
+### Example Requests
+
+#### 1. Create Stablecoin (with ERC20 Deployment)
 
 ```bash
-curl -X POST http://localhost:54321/functions/v1/stablecoin-create \
+curl -X POST https://bzxdqkttnkxqaecaiekt.supabase.co/functions/v1/stablecoin-create \
   -H "Content-Type: application/json" \
-  -H "x-api-key: test-api-key-123" \
+  -H "x-api-key: YOUR_API_KEY" \
   -d '{
     "client_name": "Test Corretora",
-    "symbol": "USDBR",
+    "symbol": "BRL",
     "client_wallet": "0x1234567890123456789012345678901234567890",
-    "webhook": "https://webhook.example.com/events"
+    "webhook": "https://webhook.example.com/events",
+    "total_supply": 1000000
+  }'
+```
+
+**Response:**
+```json
+{
+  "stablecoin_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "symbol": "BRL",
+  "status": "deployed",
+  "erc20_address": "0x...",
+  "tx_hash": "0x...",
+  "block_number": 12345,
+  "created_at": "2025-11-18T23:03:14.249Z"
+}
+```
+
+#### 2. Request Deposit (Generate PIX QR Code)
+
+```bash
+curl -X POST https://bzxdqkttnkxqaecaiekt.supabase.co/functions/v1/deposit-request \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -d '{
+    "stablecoin_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "amount": 100
+  }'
+```
+
+#### 3. Withdraw (Burn tokens and initiate PIX transfer)
+
+```bash
+curl -X POST https://bzxdqkttnkxqaecaiekt.supabase.co/functions/v1/withdraw \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -d '{
+    "stablecoin_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "amount": 50,
+    "pix_address": "email@example.com"
   }'
 ```
 
@@ -503,6 +592,29 @@ LIMIT 50;
 
 ---
 
+## DEPLOYMENT STATUS
+
+### Current State (2025-11-18)
+
+| Function | Status | JWT | Last Updated |
+|----------|--------|-----|--------------|
+| `stablecoin-create` | ✅ DEPLOYED | ❌ OFF | 2025-11-18 |
+| `deposit-request` | ⏳ READY (awaiting config) | ❌ OFF | - |
+| `withdraw` | ⏳ READY (awaiting config) | ❌ OFF | - |
+| `webhook-deposit` | ⏳ READY (awaiting config) | ❌ OFF | - |
+| `webhook-withdraw` | ⏳ READY (awaiting config) | ❌ OFF | - |
+
+### Key Changes in `stablecoin-create`
+- ✅ Now deploys ERC20 tokens immediately via factory contract
+- ✅ Requires `total_supply` parameter in request
+- ✅ Returns `erc20_address`, `tx_hash`, and `block_number`
+- ✅ Publishes two events: `stablecoin.registered` and `stablecoin.deployed`
+
+### JWT Configuration
+- ✅ JWT verification disabled via `supabase/config.toml`
+- ✅ All functions use API key authentication (x-api-key header)
+- ✅ Webhook functions validate Asaas signature instead
+
 ## DEPLOYMENT CHECKLIST
 
 Before deploying a function:
@@ -517,6 +629,27 @@ Before deploying a function:
 8. ✅ Test webhook signature validation if webhook handler
 9. ✅ Commit changes: `git add -A && git commit -m "feat: description"`
 10. ✅ Deploy: `supabase functions deploy {function-name}`
+
+### Deployment Order
+```bash
+# 1. Configure secrets first
+supabase secrets set BLOCKCHAIN_RPC_URL="..."
+supabase secrets set FACTORY_CONTRACT_ADDRESS="..."
+supabase secrets set OWNER_ADDRESS="..."
+supabase secrets set OWNER_PRIVATE_KEY="..."
+supabase secrets set CHAIN_ID="123123"
+supabase secrets set ASAAS_API_KEY="..."
+supabase secrets set ASAAS_WEBHOOK_KEY="..."
+
+# 2. Deploy functions in order
+supabase functions deploy deposit-request
+supabase functions deploy withdraw
+supabase functions deploy webhook-deposit
+supabase functions deploy webhook-withdraw
+
+# 3. Verify deployments
+supabase functions list
+```
 
 ---
 
