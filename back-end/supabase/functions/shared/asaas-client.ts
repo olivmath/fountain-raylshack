@@ -29,7 +29,9 @@ export class AsaasClient {
       throw new Error("Missing ASAAS_API_KEY environment variable")
     }
     this.apiKey = apiKey
-    this.baseUrl = "https://api.asaas.com/v3"
+    const envBase = Deno.env.get("ASAAS_BASE_URL")
+    const envMode = (Deno.env.get("ASAAS_ENV") || "sandbox").toLowerCase()
+    this.baseUrl = envBase || (envMode === "production" ? "https://api.asaas.com/v3" : "https://api-sandbox.asaas.com/v3")
   }
 
   async createPixCode(request: CreatePixCodeRequest): Promise<AsaasPixCodeResponse> {
@@ -159,6 +161,83 @@ export class AsaasClient {
     } catch (err) {
       await logger.error("Error validating webhook signature", {}, err as Error)
       return false
+    }
+  }
+
+  async deletePayment(paymentId: string): Promise<boolean> {
+    try {
+      await logger.debug("Deleting payment", { paymentId })
+      const response = await fetch(`${this.baseUrl}/payments/${paymentId}`, {
+        method: "DELETE",
+        headers: { "access_token": this.apiKey },
+      })
+      if (!response.ok) {
+        const error = await response.text()
+        await logger.error("Asaas API error", { status: response.status, error })
+        throw new AppError(
+          ErrorCode.ASAAS_ERROR,
+          `Failed to delete payment: ${response.statusText}`,
+          response.status
+        )
+      }
+      await logger.info("Payment deleted", { paymentId })
+      return true
+    } catch (err) {
+      if (err instanceof AppError) throw err
+      await logger.error("Error deleting payment", {}, err as Error)
+      throw new AppError(ErrorCode.ASAAS_ERROR, "Failed to delete payment", 500)
+    }
+  }
+
+  async confirmSandboxPayment(paymentId: string): Promise<boolean> {
+    try {
+      const url = `${this.baseUrl}/sandbox/payment/${paymentId}/confirm`
+      await logger.debug("Confirming sandbox payment", { paymentId })
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "access_token": this.apiKey },
+      })
+      if (!response.ok) {
+        const error = await response.text()
+        await logger.error("Asaas API error", { status: response.status, error })
+        throw new AppError(
+          ErrorCode.ASAAS_ERROR,
+          `Failed to confirm sandbox payment: ${response.statusText}`,
+          response.status
+        )
+      }
+      await logger.info("Sandbox payment confirmed", { paymentId })
+      return true
+    } catch (err) {
+      if (err instanceof AppError) throw err
+      await logger.error("Error confirming sandbox payment", {}, err as Error)
+      throw new AppError(ErrorCode.ASAAS_ERROR, "Failed to confirm sandbox payment", 500)
+    }
+  }
+
+  async forceSandboxOverdue(paymentId: string): Promise<boolean> {
+    try {
+      const url = `${this.baseUrl}/sandbox/payment/${paymentId}/overdue`
+      await logger.debug("Forcing sandbox overdue", { paymentId })
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "access_token": this.apiKey },
+      })
+      if (!response.ok) {
+        const error = await response.text()
+        await logger.error("Asaas API error", { status: response.status, error })
+        throw new AppError(
+          ErrorCode.ASAAS_ERROR,
+          `Failed to force overdue: ${response.statusText}`,
+          response.status
+        )
+      }
+      await logger.info("Sandbox payment set as overdue", { paymentId })
+      return true
+    } catch (err) {
+      if (err instanceof AppError) throw err
+      await logger.error("Error forcing overdue", {}, err as Error)
+      throw new AppError(ErrorCode.ASAAS_ERROR, "Failed to force overdue", 500)
     }
   }
 }
