@@ -43,14 +43,14 @@ export function StablecoinsPanel({ data }: StablecoinsPanelProps) {
   }, [selected, data.operations])
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_1fr]">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-[1.3fr_1fr]">
       <div className="rounded-2xl border border-white/5 bg-[#111726]">
-        <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-white/5 px-4 sm:px-6 py-4">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-white/40">stablecoins</p>
-            <h3 className="text-lg font-semibold text-white">Active programs</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-white">Active programs</h3>
           </div>
-          <span className="text-xs text-white/50">{data.stablecoins.length} records</span>
+          <span className="text-xs text-white/50 whitespace-nowrap">{data.stablecoins.length} records</span>
         </div>
         <Table className="text-white">
           <TableHeader>
@@ -98,7 +98,7 @@ export function StablecoinsPanel({ data }: StablecoinsPanelProps) {
         </Table>
       </div>
 
-      <div className="rounded-2xl border border-white/5 bg-[#111726] p-6">
+      <div className="rounded-2xl border border-white/5 bg-[#111726] p-4 sm:p-6">
         {selected && selectedStats ? (
           <>
             <div className="flex items-center justify-between">

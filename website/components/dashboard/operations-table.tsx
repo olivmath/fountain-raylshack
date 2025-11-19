@@ -57,16 +57,16 @@ export function OperationsTable({ data }: OperationsTableProps) {
 
   return (
     <div className="rounded-2xl border border-white/5 bg-[#111726]">
-      <div className="border-b border-white/5 px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="border-b border-white/5 px-4 sm:px-6 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-white/40">operations</p>
-            <h3 className="text-lg font-semibold text-white">All transactions</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-white">All transactions</h3>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
             <button
               onClick={() => setFilter('all')}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap ${
                 filter === 'all'
                   ? 'border-white text-white bg-white/10'
                   : 'border-white/15 text-white/50 hover:text-white hover:border-white/40'
@@ -76,7 +76,7 @@ export function OperationsTable({ data }: OperationsTableProps) {
             </button>
             <button
               onClick={() => setFilter('deposit')}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap ${
                 filter === 'deposit'
                   ? 'border-emerald-500 text-emerald-400 bg-emerald-500/10'
                   : 'border-white/15 text-white/50 hover:text-white hover:border-white/40'
@@ -86,7 +86,7 @@ export function OperationsTable({ data }: OperationsTableProps) {
             </button>
             <button
               onClick={() => setFilter('withdraw')}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap ${
                 filter === 'withdraw'
                   ? 'border-orange-500 text-orange-400 bg-orange-500/10'
                   : 'border-white/15 text-white/50 hover:text-white hover:border-white/40'
@@ -97,7 +97,7 @@ export function OperationsTable({ data }: OperationsTableProps) {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-4 gap-4">
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           <StatCard
             label="Success Rate"
             value={`${((stats.successfulDeposits + stats.successfulWithdrawals) / (stats.totalDeposits + stats.totalWithdrawals) * 100).toFixed(1)}%`}
@@ -111,7 +111,8 @@ export function OperationsTable({ data }: OperationsTableProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto -mx-4 sm:mx-0">
+        <div className="min-w-[800px] px-4 sm:px-0">
         <Table className="text-white">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -189,10 +190,11 @@ export function OperationsTable({ data }: OperationsTableProps) {
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {filteredOperations.length < data.operations.filter((op) => filter === 'all' || op.operation_type === filter).length && (
-        <div className="border-t border-white/5 px-6 py-4 flex justify-center">
+        <div className="border-t border-white/5 px-4 sm:px-6 py-4 flex justify-center">
           <button
             onClick={() => setLimit((prev) => prev + 10)}
             className="text-sm text-white/60 hover:text-white transition-colors"

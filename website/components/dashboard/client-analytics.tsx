@@ -57,9 +57,9 @@ export function ClientAnalytics({ data }: ClientAnalyticsProps) {
   }, [analytics])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Global Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <MetricCard
           icon={<TrendingUp className="h-5 w-5" />}
           label="Total Platform Volume"
@@ -82,35 +82,35 @@ export function ClientAnalytics({ data }: ClientAnalyticsProps) {
 
       {/* Per-Client Performance */}
       <div className="rounded-2xl border border-white/5 bg-[#111726]">
-        <div className="border-b border-white/5 px-6 py-4">
+        <div className="border-b border-white/5 px-4 sm:px-6 py-4">
           <p className="text-xs uppercase tracking-[0.35em] text-white/40">clients</p>
-          <h3 className="text-lg font-semibold text-white">Performance by client</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-white">Performance by client</h3>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
           {analytics.length > 0 ? (
             analytics.map((client: any, idx: number) => (
               <div
                 key={client.clientName}
-                className="rounded-xl border border-white/5 bg-[#0F141F] p-5 hover:border-white/10 transition-colors"
+                className="rounded-xl border border-white/5 bg-[#0F141F] p-4 sm:p-5 hover:border-white/10 transition-colors"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-white/40">#{idx + 1}</span>
-                      <h4 className="text-lg font-semibold text-white">{client.clientName}</h4>
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <span className="text-xs sm:text-sm font-semibold text-white/40">#{idx + 1}</span>
+                      <h4 className="text-base sm:text-lg font-semibold text-white truncate">{client.clientName}</h4>
                     </div>
-                    <p className="text-sm text-white/50 mt-1">
+                    <p className="text-xs sm:text-sm text-white/50 mt-1">
                       {client.stablecoins} stablecoin{client.stablecoins !== 1 ? 's' : ''}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-left sm:text-right">
                     <p className="text-xs text-white/40">Success Rate</p>
-                    <p className="text-xl font-bold text-emerald-400">{client.successRate.toFixed(1)}%</p>
+                    <p className="text-lg sm:text-xl font-bold text-emerald-400">{client.successRate.toFixed(1)}%</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <p className="text-xs text-white/40">Net Volume</p>
                     <p className="text-sm font-semibold text-white mt-1">{currency.format(client.netVolume)}</p>

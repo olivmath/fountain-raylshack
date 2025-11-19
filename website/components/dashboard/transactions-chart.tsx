@@ -56,19 +56,19 @@ export function TransactionsChart({ data }: TransactionsChartProps) {
   const hasData = chartData.length > 0
 
   return (
-    <div className="rounded-xl border border-white/5 bg-[#111726] p-6">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="rounded-xl border border-white/5 bg-[#111726] p-4 sm:p-6">
+      <div className="mb-4 sm:mb-6 flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.4em] text-white/40">volume</p>
-          <h4 className="mt-1 text-lg font-semibold text-white">Fluxo de depósitos e saques</h4>
+          <h4 className="mt-1 text-base sm:text-lg font-semibold text-white">Transaction Flow</h4>
         </div>
         <button className="text-white/40 transition-colors hover:text-white/70">
-          <Info className="h-5 w-5" />
+          <Info className="h-4 w-4 sm:h-5 sm:w-5" />
         </button>
       </div>
 
       {hasData ? (
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px]">
           <LineChart data={chartData}>
             <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
             <XAxis dataKey="label" stroke="rgba(255,255,255,0.5)" tick={{ fill: 'rgba(255,255,255,0.7)' }} />
@@ -93,8 +93,8 @@ export function TransactionsChart({ data }: TransactionsChartProps) {
           </LineChart>
         </ResponsiveContainer>
       ) : (
-        <div className="rounded-lg border border-dashed border-white/10 bg-[#0F131C] p-12 text-center text-white/50">
-          Nenhuma operação registrada ainda.
+        <div className="rounded-lg border border-dashed border-white/10 bg-[#0F131C] p-8 sm:p-12 text-center text-white/50 text-sm sm:text-base">
+          No operations recorded yet.
         </div>
       )}
     </div>

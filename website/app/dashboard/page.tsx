@@ -38,16 +38,25 @@ const tabDescriptions: Record<string, { title: string; description: string }> = 
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<string>('Overview')
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { title, description } = tabDescriptions[activeTab]
   const { data, loading, error } = useDashboardData()
 
   return (
-    <div className="flex h-screen bg-[#0B0E14] text-white">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header section={activeTab} />
+    <div className="flex h-screen bg-[#0B0E14] text-white overflow-hidden">
+      <Sidebar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        isMobileOpen={isMobileMenuOpen}
+        onMobileClose={() => setIsMobileMenuOpen(false)}
+      />
+      <div className="flex-1 flex flex-col overflow-hidden w-full">
+        <Header 
+          section={activeTab}
+          onMenuClick={() => setIsMobileMenuOpen(true)}
+        />
         <main className="flex-1 overflow-auto bg-[#0F131C]">
-          <div className="p-8 space-y-6">
+          <div className="p-4 sm:p-6 lg:p-8 space-y-6">
             {loading && (
               <div className="flex flex-col items-center justify-center py-24 space-y-6">
                 <BoxLoader />

@@ -66,14 +66,14 @@ export function PlatformActivity({ data }: PlatformActivityProps) {
   const timeRanges = ['Custom', 'Today', 'Yesterday', '7D', '30D', '3M', '6M', '12M']
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.4em] text-white/40">activity</p>
-          <h3 className="text-xl font-semibold text-white mt-1">Platform metrics</h3>
+          <h3 className="text-lg sm:text-xl font-semibold text-white mt-1">Platform metrics</h3>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 overflow-x-auto pb-2 sm:pb-0">
           {timeRanges.map((range) => (
             <button
               key={range}
@@ -91,7 +91,7 @@ export function PlatformActivity({ data }: PlatformActivityProps) {
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
         {metrics.map((metric, idx) => (
           <MetricCard key={idx} {...metric} />
         ))}

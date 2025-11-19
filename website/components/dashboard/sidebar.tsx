@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronDown, ChevronLeft, Menu, LayoutDashboard, Coins, Code2, Settings, Building2 } from 'lucide-react'
+import { ChevronDown, ChevronLeft, Menu, X, LayoutDashboard, Coins, Code2, Settings, Building2 } from 'lucide-react'
 import { Player } from '@lordicon/react'
 import { useState, useEffect } from 'react'
 
@@ -30,23 +30,47 @@ const navItems = [
 interface SidebarProps {
   activeTab: string
   onTabChange: (tab: string) => void
+  isMobileOpen: boolean
+  onMobileClose: () => void
 }
 
-export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange, isMobileOpen, onMobileClose }: SidebarProps) {
   const lordiconData = useLordicon()
   const [isMenuOpen, setIsMenuOpen] = useState(true)
 
   return (
-    <div className="w-64 bg-[#0F131C] border-r border-white/5 flex flex-col p-6">
+    <>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onMobileClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`
+        fixed lg:static inset-y-0 left-0 z-50
+        w-64 bg-[#0F131C] border-r border-white/5 flex flex-col p-6
+        transform transition-transform duration-300 ease-in-out
+        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
       {/* Logo / Collapse */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-2 text-white">
           <span className="text-xl font-semibold tracking-tight">Fountain</span>
         </div>
         <button
-          className="text-white/50 hover:text-white transition-colors"
+          className="text-white/50 hover:text-white transition-colors lg:hidden"
+          onClick={onMobileClose}
+          aria-label="Close menu"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        <button
+          className="hidden lg:block text-white/50 hover:text-white transition-colors"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          aria-label={isMenuOpen ? 'Recolher menu' : 'Expandir menu'}
+          aria-label={isMenuOpen ? 'Collapse menu' : 'Expand menu'}
         >
           <ChevronLeft className={`w-5 h-5 transition-transform ${isMenuOpen ? '' : 'rotate-180'}`} />
         </button>
@@ -74,18 +98,22 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className={`mt-6 space-y-1 transition-all ${isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <nav className={`mt-6 space-y-1 transition-all ${isMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none lg:pointer-events-auto'}`}>
         {navItems.map((item) => (
           <NavItem
             key={item.label}
             icon={item.icon}
             label={item.label}
             active={item.label === activeTab}
-            onSelect={() => onTabChange(item.label)}
+            onSelect={() => {
+              onTabChange(item.label)
+              onMobileClose()
+            }}
           />
         ))}
       </nav>
     </div>
+    </>
   )
 }
 
