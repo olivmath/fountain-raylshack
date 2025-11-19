@@ -10,6 +10,7 @@ build/
 
 # Environment variables
 .env
+.env.example
 .env.local
 .env.*.local
 
@@ -54,3 +55,6 @@ pids/
 tmp/
 temp/
 *.tmp
+
+# Deployment scripts
+deploy.sh

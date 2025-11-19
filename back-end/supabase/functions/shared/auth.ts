@@ -13,10 +13,13 @@ export async function validateApiKey(apiKey: string): Promise<AuthResult> {
   try {
     // Hash the API key using Deno's crypto
     const encoder = new TextEncoder()
-    const data = encoder.encode(apiKey)
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data)
+    const encodedData = encoder.encode(apiKey)
+    const hashBuffer = await crypto.subtle.digest("SHA-256", encodedData)
     const hashArray = Array.from(new Uint8Array(hashBuffer))
     const hash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
+
+    console.log("DEBUG: Calculated hash:", hash)
+    await logger.debug("API key validation", { calculatedHash: hash })
 
     const supabase = getSupabaseClient()
 
@@ -27,22 +30,27 @@ export async function validateApiKey(apiKey: string): Promise<AuthResult> {
       .eq("api_key_hash", hash)
       .single()
 
+    console.log("DEBUG: Query result:", { data, error })
+
     if (error) {
-      await logger.warn("API key not found", { error: error.message })
+      await logger.warn("API key not found", { error: error.message, code: error.code })
       return { valid: false }
     }
 
     if (!data || !data.is_active) {
-      await logger.warn("API key inactive or not found")
+      await logger.warn("API key inactive or not found", { data })
       return { valid: false }
     }
 
-    // Update last_used_at
-    await supabase
-      .from("api_keys")
-      .update({ last_used_at: new Date().toISOString() })
-      .eq("api_key_hash", hash)
-      .catch((err) => logger.warn("Failed to update last_used_at", { error: err.message }))
+    // Update last_used_at (non-critical, ignore errors)
+    try {
+      await supabase
+        .from("api_keys")
+        .update({ last_used_at: new Date().toISOString() })
+        .eq("api_key_hash", hash)
+    } catch (err) {
+      await logger.warn("Failed to update last_used_at", { error: (err as Error).message })
+    }
 
     return {
       valid: true,
@@ -50,7 +58,8 @@ export async function validateApiKey(apiKey: string): Promise<AuthResult> {
       clientName: data.client_name,
     }
   } catch (err) {
-    await logger.error("Error validating API key", {}, err as Error)
+    console.error("DEBUG: Exception in validateApiKey:", err)
+    await logger.error("Error validating API key", { errorMessage: (err as Error).message }, err as Error)
     return { valid: false }
   }
 }

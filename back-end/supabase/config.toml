@@ -1,0 +1,19 @@
+# Supabase Configuration
+
+[functions."stablecoin-create"]
+verify_jwt = false
+
+[functions."deposit-request"]
+verify_jwt = false
+
+[functions."withdraw"]
+verify_jwt = false
+
+[functions."webhook-deposit"]
+verify_jwt = false
+
+[functions."webhook-withdraw"]
+verify_jwt = false
+
+[functions."hello-world"]
+verify_jwt = false

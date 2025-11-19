@@ -5,7 +5,7 @@ import {
   parseUnits,
   type PublicClient,
   type WalletClient,
-} from "viem"
+} from "https://esm.sh/viem@2.8.11"
 import { createLogger } from "./logger.ts"
 import { AppError, ErrorCode } from "./error-handler.ts"
 import type { ContractDeployResult, TransactionResult } from "./types.ts"
