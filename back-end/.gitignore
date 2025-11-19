@@ -54,3 +54,6 @@ pids/
 tmp/
 temp/
 *.tmp
+
+# Deployment scripts
+deploy.sh
