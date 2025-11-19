@@ -113,15 +113,25 @@ export class BlockchainClient {
 
       // Execute transaction with explicit gas settings
       console.log("[BlockchainClient] Calling writeContract with args:", [name, symbol, decimals])
-      const hash = await this.walletClient.writeContract({
-        address: this.factoryAddress as `0x${string}`,
-        abi: FACTORY_ABI,
-        functionName: "createStablecoin",
-        args: [name, symbol, decimals as unknown as any],
-        gas: 3000000n, // 3M gas limit
-        maxFeePerGas: parseUnits("100", "gwei"),
-        maxPriorityFeePerGas: parseUnits("10", "gwei"),
-      })
+      let hash: string
+      try {
+        hash = await this.walletClient.writeContract({
+          address: this.factoryAddress as `0x${string}`,
+          abi: FACTORY_ABI,
+          functionName: "createStablecoin",
+          args: [name, symbol, decimals as unknown as any],
+          gas: 3000000n, // 3M gas limit
+          maxFeePerGas: parseUnits("100", "gwei"),
+          maxPriorityFeePerGas: parseUnits("10", "gwei"),
+        })
+      } catch (writeErr) {
+        const errMsg = writeErr instanceof Error ? writeErr.message : String(writeErr)
+        console.error("[BlockchainClient] writeContract failed:", {
+          error: errMsg,
+          errorFull: String(writeErr),
+        })
+        throw writeErr
+      }
 
       console.log("[BlockchainClient] Transaction hash:", hash)
 
@@ -131,9 +141,22 @@ export class BlockchainClient {
       })
 
       // Wait for confirmation
-      const receipt = await this.publicClient.waitForTransactionReceipt({ hash })
+      console.log("[BlockchainClient] Waiting for transaction receipt:", hash)
+      let receipt
+      try {
+        receipt = await this.publicClient.waitForTransactionReceipt({ hash })
+        console.log("[BlockchainClient] Transaction receipt received:", {
+          status: receipt.status,
+          blockNumber: receipt.blockNumber.toString(),
+        })
+      } catch (receiptErr) {
+        const errMsg = receiptErr instanceof Error ? receiptErr.message : String(receiptErr)
+        console.error("[BlockchainClient] waitForTransactionReceipt failed:", errMsg)
+        throw receiptErr
+      }
 
       if (receipt.status !== "success") {
+        console.error("[BlockchainClient] Transaction failed with status:", receipt.status)
         throw new Error("Transaction failed")
       }
 
@@ -147,18 +170,25 @@ export class BlockchainClient {
       const logs = receipt.logs
       let tokenAddress: string | null = null
 
+      console.log("[BlockchainClient] Receipt logs count:", logs?.length || 0)
+
       // Look for StablecoinCreated event (would need proper parsing)
       // For now, return the contract address from logs
       if (logs && logs.length > 0) {
         // The first log should contain the created token address
         // In a real scenario, you'd parse the event properly
         tokenAddress = logs[0].address
+        console.log("[BlockchainClient] Extracted token address from logs:", tokenAddress)
+      } else {
+        console.warn("[BlockchainClient] No logs found in receipt")
       }
 
       if (!tokenAddress) {
+        console.error("[BlockchainClient] Could not extract token address from transaction receipt")
         throw new Error("Could not extract token address from transaction receipt")
       }
 
+      console.log("[BlockchainClient] Returning token address:", tokenAddress)
       return tokenAddress
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err)
