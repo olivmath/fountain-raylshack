@@ -47,11 +47,11 @@ serve(async (req: Request) => {
     const supabase = getSupabaseClient()
 
     // List operations from all stablecoins owned by this client
-    // Use INNER JOIN to stablecoins to ensure only client's operations are returned
+    // Filter directly by client_id (now available in operations table) for better performance
     let query = supabase
       .from("operations")
       .select("*, stablecoins(stablecoin_id, symbol, erc20_address, status)", { count: "exact" })
-      .eq("stablecoins.client_id", auth.clientId) // This inner join filters by client ownership
+      .eq("client_id", auth.clientId) // Direct filter on operations.client_id (no JOIN needed)
 
     // Apply filters
     if (status) {
