@@ -36,6 +36,7 @@ export interface Stablecoin {
   webhook_url: string
   symbol: string
   erc20_address: string | null
+  asaas_customer_id: string | null
   status: "registered" | "deployed"
   total_supply: number
   current_supply: number

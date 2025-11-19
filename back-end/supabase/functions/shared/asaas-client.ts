@@ -4,8 +4,24 @@ import type { AsaasPixCodeResponse } from "./types.ts"
 
 const logger = createLogger("asaas-client")
 
+export interface CreateCustomerRequest {
+  name: string
+  cpfCnpj?: string
+  email?: string
+  phone?: string
+  mobilePhone?: string
+  address?: string
+  addressNumber?: string
+  complement?: string
+  province?: string
+  city?: string
+  state?: string
+  postalCode?: string
+}
+
 export interface CreatePixCodeRequest {
   billingType: "PIX"
+  customerId: string
   value: number
   externalReference: string
   description: string
@@ -34,11 +50,58 @@ export class AsaasClient {
     this.baseUrl = envBase || (envMode === "production" ? "https://api.asaas.com/v3" : "https://api-sandbox.asaas.com/v3")
   }
 
+  async createCustomer(request: CreateCustomerRequest): Promise<{ id: string; name: string }> {
+    try {
+      await logger.debug("Creating Asaas customer", {
+        name: request.name,
+      })
+
+      const response = await fetch(`${this.baseUrl}/customers`, {
+        method: "POST",
+        headers: {
+          "access_token": this.apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(request),
+      })
+
+      if (!response.ok) {
+        const error = await response.text()
+        await logger.error("Asaas API error", {
+          status: response.status,
+          error,
+        })
+        throw new AppError(
+          ErrorCode.ASAAS_ERROR,
+          `Failed to create customer: ${response.statusText}`,
+          response.status
+        )
+      }
+
+      const data: { id: string; name: string } = await response.json()
+      await logger.info("Customer created successfully", {
+        customerId: data.id,
+        name: data.name,
+      })
+
+      return data
+    } catch (err) {
+      if (err instanceof AppError) throw err
+      await logger.error("Error creating customer", {}, err as Error)
+      throw new AppError(
+        ErrorCode.ASAAS_ERROR,
+        "Failed to create customer",
+        500
+      )
+    }
+  }
+
   async createPixCode(request: CreatePixCodeRequest): Promise<AsaasPixCodeResponse> {
     try {
       await logger.debug("Creating PIX code", {
         externalReference: request.externalReference,
         value: request.value,
+        customerId: request.customerId,
       })
 
       const response = await fetch(`${this.baseUrl}/payments`, {

@@ -2,7 +2,7 @@
 # Configuration for API testing
 
 # API Configuration
-export API_KEY="test-api-key-123"
+export API_KEY="sk_93d392d426debe7edaebb78d534e60b33e935ebd99d653b5"
 export BASE_URL="https://bzxdqkttnkxqaecaiekt.supabase.co/functions/v1"
 export LOCAL_URL="http://localhost:54321/functions/v1"
 

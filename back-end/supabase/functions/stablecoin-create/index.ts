@@ -5,6 +5,7 @@ import { validateApiKey, extractApiKey } from "../shared/auth.ts"
 import { createErrorResponse, createSuccessResponse, ErrorCode, AppError } from "../shared/error-handler.ts"
 import { publishEvent, createDomainEvent } from "../shared/event-publisher.ts"
 import { createBlockchainClient } from "../shared/blockchain-client.ts"
+import { createAsaasClient } from "../shared/asaas-client.ts"
 
 const logger = createLogger("stablecoin-create")
 
@@ -84,6 +85,31 @@ serve(async (req: Request) => {
     // Generate stablecoin_id
     const stablecoinId = crypto.randomUUID()
 
+    // Create customer on Asaas for payments
+    let asaasCustomerId: string
+
+    try {
+      await log.info("Creating Asaas customer for payments", { client_name, symbol })
+      const asaasClient = createAsaasClient()
+      const customerResult = await asaasClient.createCustomer({
+        name: client_name,
+      })
+
+      asaasCustomerId = customerResult.id
+
+      await log.info("Asaas customer created successfully", {
+        asaasCustomerId,
+        customerName: customerResult.name,
+      })
+    } catch (err) {
+      await log.error("Failed to create Asaas customer", {
+        client_name,
+        symbol,
+        error: (err as Error).message,
+      }, err as Error)
+      throw err
+    }
+
     // Deploy ERC20 via factory contract
     let erc20Address: string
     let deployTxHash: string
@@ -128,6 +154,7 @@ serve(async (req: Request) => {
       webhook_url: webhook,
       symbol,
       erc20_address: erc20Address,
+      asaas_customer_id: asaasCustomerId,
       total_supply,
       status: "deployed",
       deployed_at: new Date().toISOString(),

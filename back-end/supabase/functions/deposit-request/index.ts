@@ -109,8 +109,18 @@ serve(async (req: Request) => {
 
     // Create PIX QRCode via Asaas
     const asaasClient = createAsaasClient()
+
+    if (!stablecoin.asaas_customer_id) {
+      return createErrorResponse(
+        "Stablecoin customer not configured on Asaas",
+        500,
+        ErrorCode.INTERNAL_ERROR
+      )
+    }
+
     const asaasResponse = await asaasClient.createPixCode({
       billingType: "PIX",
+      customerId: stablecoin.asaas_customer_id,
       value: amount,
       externalReference: operationId,
       description: `Stablecoin ${stablecoin.symbol} - Deposit`,
