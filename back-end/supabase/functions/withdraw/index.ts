@@ -92,6 +92,13 @@ serve(async (req: Request) => {
     // Generate operation_id
     const operationId = crypto.randomUUID()
 
+    // Hash API key for audit trail
+    const encoder = new TextEncoder()
+    const encodedData = encoder.encode(apiKey)
+    const hashBuffer = await crypto.subtle.digest("SHA-256", encodedData)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    const apiKeyHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
+
     const log2 = createLogger("withdraw", operationId)
     await log2.info("Processing withdrawal", {
       symbol: stablecoin.symbol,
@@ -102,6 +109,8 @@ serve(async (req: Request) => {
     const { error: insertError } = await supabase.from("operations").insert({
       operation_id: operationId,
       stablecoin_id: stablecoin.stablecoin_id,
+      client_id: auth.clientId,
+      created_by_api_key_hash: apiKeyHash,
       operation_type: "withdraw",
       amount,
       pix_address,
