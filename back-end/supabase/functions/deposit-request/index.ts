@@ -26,15 +26,6 @@ serve(async (req: Request) => {
       return createErrorResponse("Invalid API key", 401, ErrorCode.UNAUTHORIZED)
     }
 
-    // Extract symbol from URL path
-    const url = new URL(req.url)
-    const pathParts = url.pathname.split("/")
-    const symbol = pathParts[pathParts.length - 2] // /stablecoin/{symbol}/deposit
-
-    if (!symbol) {
-      return createErrorResponse("Missing symbol in path", 400)
-    }
-
     // Parse request body
     let body: unknown
     try {
@@ -53,21 +44,27 @@ serve(async (req: Request) => {
     }
 
     const { amount } = validation.data
+    const stablecoinId = (body as Record<string, unknown>).stablecoin_id as string | undefined
+
+    if (!stablecoinId) {
+      return createErrorResponse("Missing stablecoin_id", 400, ErrorCode.INVALID_REQUEST)
+    }
+
     const log = createLogger("deposit-request")
 
     await log.info("Deposit requested", {
       clientId: auth.clientId,
-      symbol,
+      stablecoinId,
       amount,
     })
 
     const supabase = getSupabaseClient()
 
-    // Find stablecoin by symbol
+    // Find stablecoin by stablecoin_id
     const { data: stablecoin, error: stablecoinError } = await supabase
       .from("stablecoins")
       .select("*")
-      .eq("symbol", symbol)
+      .eq("stablecoin_id", stablecoinId)
       .single()
 
     if (stablecoinError || !stablecoin) {
@@ -116,7 +113,7 @@ serve(async (req: Request) => {
       billingType: "PIX",
       value: amount,
       externalReference: operationId,
-      description: `Stablecoin ${symbol} - Deposit`,
+      description: `Stablecoin ${stablecoin.symbol} - Deposit`,
     })
 
     // Insert operation into database
@@ -151,7 +148,7 @@ serve(async (req: Request) => {
           {
             operationId,
             stablecoinId: stablecoin.stablecoin_id,
-            symbol,
+            symbol: stablecoin.symbol,
             amount,
             asaasPaymentId: asaasResponse.id,
           }
@@ -163,7 +160,7 @@ serve(async (req: Request) => {
 
     await log.info("Deposit request created", {
       operationId,
-      symbol,
+      symbol: stablecoin.symbol,
       amount,
     })
 
