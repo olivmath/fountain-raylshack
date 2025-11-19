@@ -89,6 +89,15 @@ serve(async (req: Request) => {
       )
     }
 
+    // Verify stablecoin is deployed
+    if (stablecoin.status !== "deployed") {
+      return createErrorResponse(
+        `Stablecoin is not deployed yet (status: ${stablecoin.status})`,
+        400,
+        ErrorCode.INVALID_REQUEST
+      )
+    }
+
     // Generate operation_id
     const operationId = crypto.randomUUID()
 
