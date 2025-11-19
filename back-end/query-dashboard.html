@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rayls Query Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 80vh;
+    }
+
+    .left-panel {
+      padding: 30px;
+      border-right: 1px solid #e0e0e0;
+      overflow-y: auto;
+    }
+
+    .right-panel {
+      padding: 30px;
+      background: #f9f9f9;
+      overflow-y: auto;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 30px;
+      font-size: 24px;
+    }
+
+    h2 {
+      color: #555;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      color: #888;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #333;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    select {
+      cursor: pointer;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 5px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      color: #667eea;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .result {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 5px;
+      padding: 20px;
+      margin-top: 20px;
+      max-height: 100%;
+      overflow-y: auto;
+    }
+
+    .result.error {
+      background: #fff5f5;
+      border-color: #feb2b2;
+      color: #c53030;
+    }
+
+    .result.success {
+      background: #f0fff4;
+      border-color: #9ae6b4;
+      color: #22543d;
+    }
+
+    pre {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #333;
+    }
+
+    .result.error pre {
+      background: #fed7d7;
+    }
+
+    .result.success pre {
+      background: #c6f6d5;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .tab {
+      padding: 10px 15px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: #888;
+      border-bottom: 2px solid transparent;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .params-grid {
+      display: grid;
+      gap: 15px;
+    }
+
+    .grid-2 {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    @media (max-width: 1024px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+
+      .left-panel {
+        border-right: none;
+        border-bottom: 1px solid #e0e0e0;
+      }
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-badge.success {
+      background: #c6f6d5;
+      color: #22543d;
+    }
+
+    .status-badge.error {
+      background: #fed7d7;
+      color: #c53030;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left-panel">
+      <h1>🔍 Query Dashboard</h1>
+
+      <div class="form-group">
+        <label for="apiKey">API Key</label>
+        <input type="text" id="apiKey" placeholder="Sua API key aqui..." value="test-api-key-123" readonly>
+      </div>
+
+      <h2>Função</h2>
+      <div class="form-group">
+        <select id="functionSelect" onchange="updateForm()">
+          <option value="">-- Selecione uma função --</option>
+          <option value="list-client-stablecoins">List Client Stablecoins</option>
+          <option value="get-stablecoin-info">Get Stablecoin Info</option>
+          <option value="list-stablecoin-operations">List Stablecoin Operations</option>
+          <option value="list-client-operations">List Client Operations</option>
+          <option value="get-operation-details">Get Operation Details</option>
+          <option value="get-stablecoin-stats">Get Stablecoin Stats</option>
+        </select>
+      </div>
+
+      <h2>Parâmetros</h2>
+      <div id="paramsContainer" class="params-grid"></div>
+
+      <button onclick="executeQuery()" style="margin-top: 30px;">
+        Executar Query
+      </button>
+
+      <div class="loading" id="loading">⏳ Carregando...</div>
+    </div>
+
+    <div class="right-panel">
+      <h1>Resultado</h1>
+      <div id="result" class="result" style="display: none;"></div>
+      <div style="color: #999; text-align: center; padding-top: 40px;" id="emptyState">
+        👈 Selecione uma função para começar
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://bzxdqkttnkxqaecaiekt.supabase.co/functions/v1';
+
+    const functions = {
+      'list-client-stablecoins': {
+        name: 'List Client Stablecoins',
+        params: [
+          { name: 'limit', type: 'number', default: '50', label: 'Limit (max 100)' },
+          { name: 'offset', type: 'number', default: '0', label: 'Offset' },
+          { name: 'status', type: 'text', default: '', label: 'Status (opcional: registered, deployed)' },
+        ]
+      },
+      'get-stablecoin-info': {
+        name: 'Get Stablecoin Info',
+        params: [
+          { name: 'stablecoin_id', type: 'text', default: '', label: 'Stablecoin ID ou' },
+          { name: 'erc20_address', type: 'text', default: '', label: 'ERC20 Address' },
+        ]
+      },
+      'list-stablecoin-operations': {
+        name: 'List Stablecoin Operations',
+        params: [
+          { name: 'stablecoin_id', type: 'text', default: '', label: 'Stablecoin ID (obrigatório)' },
+          { name: 'limit', type: 'number', default: '50', label: 'Limit (max 100)' },
+          { name: 'offset', type: 'number', default: '0', label: 'Offset' },
+          { name: 'status', type: 'text', default: '', label: 'Status (opcional)' },
+          { name: 'type', type: 'text', default: '', label: 'Type (opcional: deposit, withdraw)' },
+        ]
+      },
+      'list-client-operations': {
+        name: 'List Client Operations',
+        params: [
+          { name: 'limit', type: 'number', default: '50', label: 'Limit (max 100)' },
+          { name: 'offset', type: 'number', default: '0', label: 'Offset' },
+          { name: 'status', type: 'text', default: '', label: 'Status (opcional)' },
+          { name: 'type', type: 'text', default: '', label: 'Type (opcional: deposit, withdraw)' },
+        ]
+      },
+      'get-operation-details': {
+        name: 'Get Operation Details',
+        params: [
+          { name: 'operation_id', type: 'text', default: '', label: 'Operation ID (obrigatório)' },
+        ]
+      },
+      'get-stablecoin-stats': {
+        name: 'Get Stablecoin Stats',
+        params: [
+          { name: 'stablecoin_id', type: 'text', default: '', label: 'Stablecoin ID (obrigatório)' },
+        ]
+      },
+    };
+
+    function updateForm() {
+      const selected = document.getElementById('functionSelect').value;
+      const container = document.getElementById('paramsContainer');
+      container.innerHTML = '';
+
+      if (!selected) return;
+
+      const func = functions[selected];
+      func.params.forEach(param => {
+        const group = document.createElement('div');
+        group.className = 'form-group';
+        group.innerHTML = `
+          <label for="param_${param.name}">${param.label}</label>
+          <input type="${param.type}" id="param_${param.name}" placeholder="${param.label}" value="${param.default}">
+        `;
+        container.appendChild(group);
+      });
+    }
+
+    async function executeQuery() {
+      const apiKey = document.getElementById('apiKey').value;
+      const selected = document.getElementById('functionSelect').value;
+
+      if (!apiKey) {
+        showError('API Key é obrigatória');
+        return;
+      }
+
+      if (!selected) {
+        showError('Selecione uma função');
+        return;
+      }
+
+      const func = functions[selected];
+      const params = new URLSearchParams();
+
+      func.params.forEach(param => {
+        const value = document.getElementById(`param_${param.name}`).value;
+        if (value) {
+          params.append(param.name, value);
+        }
+      });
+
+      const url = `${API_BASE}/${selected}?${params.toString()}`;
+
+      try {
+        document.getElementById('loading').classList.add('show');
+        document.getElementById('emptyState').style.display = 'none';
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'x-api-key': apiKey,
+            'Content-Type': 'application/json',
+          }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showError(JSON.stringify(data, null, 2), response.status);
+        } else {
+          showSuccess(JSON.stringify(data, null, 2));
+        }
+      } catch (error) {
+        showError(error.message);
+      } finally {
+        document.getElementById('loading').classList.remove('show');
+      }
+    }
+
+    function showSuccess(message) {
+      const result = document.getElementById('result');
+      result.className = 'result success';
+      result.innerHTML = `
+        <span class="status-badge success">✓ Sucesso</span>
+        <pre>${message}</pre>
+      `;
+      result.style.display = 'block';
+    }
+
+    function showError(message, status = 'Error') {
+      const result = document.getElementById('result');
+      result.className = 'result error';
+      result.innerHTML = `
+        <span class="status-badge error">✗ Erro ${status}</span>
+        <pre>${message}</pre>
+      `;
+      result.style.display = 'block';
+    }
+
+    // Enter key to execute
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && e.ctrlKey) {
+        executeQuery();
+      }
+    });
+  </script>
+</body>
+</html>
