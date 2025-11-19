@@ -3,6 +3,7 @@ import {
   createWalletClient,
   http,
   parseUnits,
+  privateKeyToAccount,
   type PublicClient,
   type WalletClient,
 } from "https://esm.sh/viem@2.8.11"
@@ -79,8 +80,11 @@ export class BlockchainClient {
       transport: http(rpcUrl),
     })
 
+    // Create account from private key for transaction signing
+    const account = privateKeyToAccount(ownerPrivateKey as `0x${string}`)
+
     this.walletClient = createWalletClient({
-      account: ownerAddress as `0x${string}`,
+      account,
       chain: { id: chainId, name: "Custom", nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [rpcUrl] } } },
       transport: http(rpcUrl),
     })
@@ -98,14 +102,24 @@ export class BlockchainClient {
         decimals,
       })
 
+      console.log("[BlockchainClient] createStablecoin called", {
+        name,
+        symbol,
+        decimals,
+        factoryAddress: this.factoryAddress,
+        chainId: this.chainId,
+      })
+
       // Execute transaction
+      console.log("[BlockchainClient] Calling writeContract with args:", [name, symbol, decimals])
       const hash = await this.walletClient.writeContract({
-        account: this.ownerAddress as `0x${string}`,
         address: this.factoryAddress as `0x${string}`,
         abi: FACTORY_ABI,
         functionName: "createStablecoin",
         args: [name, symbol, decimals as unknown as any],
       })
+
+      console.log("[BlockchainClient] Transaction hash:", hash)
 
       await logger.info("Stablecoin creation transaction sent", {
         txHash: hash,
@@ -143,8 +157,16 @@ export class BlockchainClient {
 
       return tokenAddress
     } catch (err) {
-      if (err instanceof AppError) throw err
-      await logger.error("Error creating stablecoin", { symbol }, err as Error)
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      const errorStack = err instanceof Error ? err.stack : "No stack trace"
+
+      console.error("[BlockchainClient] ERROR in createStablecoin:", {
+        message: errorMessage,
+        stack: errorStack,
+        symbol,
+      })
+
+      await logger.error("Error creating stablecoin", { symbol, errorMessage }, err as Error)
       throw new AppError(
         ErrorCode.BLOCKCHAIN_ERROR,
         "Failed to create stablecoin on blockchain",
@@ -167,8 +189,13 @@ export class BlockchainClient {
 
       const amountWei = parseUnits(amount.toString(), 18)
 
+      console.log("[BlockchainClient] mintTokens called", {
+        stablecoinAddress,
+        recipientAddress,
+        amount,
+      })
+
       const hash = await this.walletClient.writeContract({
-        account: this.ownerAddress as `0x${string}`,
         address: this.factoryAddress as `0x${string}`,
         abi: FACTORY_ABI,
         functionName: "mintTokens",
@@ -178,6 +205,8 @@ export class BlockchainClient {
           amountWei,
         ],
       })
+
+      console.log("[BlockchainClient] Mint transaction hash:", hash)
 
       await logger.info("Mint transaction sent", {
         txHash: hash,
@@ -206,8 +235,16 @@ export class BlockchainClient {
         status: "success",
       }
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      const errorStack = err instanceof Error ? err.stack : "No stack trace"
+
+      console.error("[BlockchainClient] ERROR in mintTokens:", {
+        message: errorMessage,
+        stack: errorStack,
+      })
+
       if (err instanceof AppError) throw err
-      await logger.error("Error minting tokens", {}, err as Error)
+      await logger.error("Error minting tokens", { errorMessage }, err as Error)
       throw new AppError(
         ErrorCode.BLOCKCHAIN_ERROR,
         "Failed to mint tokens",
@@ -230,8 +267,13 @@ export class BlockchainClient {
 
       const amountWei = parseUnits(amount.toString(), 18)
 
+      console.log("[BlockchainClient] burnTokens called", {
+        stablecoinAddress,
+        fromAddress,
+        amount,
+      })
+
       const hash = await this.walletClient.writeContract({
-        account: this.ownerAddress as `0x${string}`,
         address: this.factoryAddress as `0x${string}`,
         abi: FACTORY_ABI,
         functionName: "burnTokens",
@@ -241,6 +283,8 @@ export class BlockchainClient {
           amountWei,
         ],
       })
+
+      console.log("[BlockchainClient] Burn transaction hash:", hash)
 
       await logger.info("Burn transaction sent", {
         txHash: hash,
@@ -269,8 +313,16 @@ export class BlockchainClient {
         status: "success",
       }
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      const errorStack = err instanceof Error ? err.stack : "No stack trace"
+
+      console.error("[BlockchainClient] ERROR in burnTokens:", {
+        message: errorMessage,
+        stack: errorStack,
+      })
+
       if (err instanceof AppError) throw err
-      await logger.error("Error burning tokens", {}, err as Error)
+      await logger.error("Error burning tokens", { errorMessage }, err as Error)
       throw new AppError(
         ErrorCode.BLOCKCHAIN_ERROR,
         "Failed to burn tokens",
