@@ -157,6 +157,12 @@ export function Web3HeroAnimated() {
               >
                 Access API
               </a>
+              <a
+                href="/dashboard"
+                className="rounded-full px-4 py-2 text-sm bg-gradient-to-r from-[#6372BF] to-[#2C1E49] text-white transition hover:shadow-lg hover:shadow-[#6372BF]/40"
+              >
+                Entrar
+              </a>
             </div>
 
             <button className="md:hidden rounded-full bg-white/10 px-3 py-2 text-sm text-white/80">Menu</button>
