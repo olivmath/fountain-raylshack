@@ -3,10 +3,15 @@ import { getSupabaseClient } from "../shared/supabase-client.ts"
 import { createLogger } from "../shared/logger.ts"
 import { validateApiKey, extractApiKey } from "../shared/auth.ts"
 import { createErrorResponse, createSuccessResponse, ErrorCode } from "../shared/error-handler.ts"
+import { handleCorsPreFlight } from "../shared/cors.ts"
 
 const logger = createLogger("get-stablecoin-stats")
 
 serve(async (req: Request) => {
+  // Handle CORS preflight
+  const corsResponse = handleCorsPreFlight(req)
+  if (corsResponse) return corsResponse
+
   if (req.method !== "GET") {
     return createErrorResponse("Method not allowed", 405)
   }

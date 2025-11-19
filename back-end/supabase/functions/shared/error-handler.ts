@@ -1,4 +1,5 @@
 import { createLogger } from "./logger.ts"
+import { createCorsHeaders } from "./cors.ts"
 import type { ErrorResponse } from "./types.ts"
 
 const logger = createLogger("error-handler")
@@ -88,7 +89,10 @@ export function createErrorResponse(
     }),
     {
       status: statusCode,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...createCorsHeaders(),
+      },
     }
   )
 }
@@ -98,7 +102,10 @@ export function createSuccessResponse<T>(data: T, statusCode: number = 200): Res
     JSON.stringify(data),
     {
       status: statusCode,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...createCorsHeaders(),
+      },
     }
   )
 }
