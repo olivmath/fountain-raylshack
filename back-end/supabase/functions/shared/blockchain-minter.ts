@@ -51,52 +51,52 @@ export async function mintTokensForDeposit(operationId: string): Promise<{
     let txHash: string
 
     if (isFirstDeployment) {
-      // Deploy new stablecoin contract
-      await log.info("Deploying new stablecoin contract", {
+      // NOTE: First deployment already happened during stablecoin-create
+      // All tokens were minted to owner during deployment
+      // Now we just need to transfer the deposit amount from owner to client wallet
+      await log.info("First deposit - transferring tokens from owner to client", {
         symbol: stablecoin.symbol,
+        amount: operation.amount,
       })
 
-      const deployResult = await blockchain.createStablecoin(
-        stablecoin.client_name,
-        stablecoin.symbol,
+      erc20Address = stablecoin.erc20_address
+
+      if (!erc20Address) {
+        throw new AppError(ErrorCode.NOT_FOUND, "Stablecoin ERC20 address not found")
+      }
+
+      // Transfer tokens from owner to client wallet
+      const transferResult = await blockchain.transferTokens(
+        erc20Address,
         stablecoin.client_wallet,
         operation.amount
       )
 
-      erc20Address = deployResult.address
-      txHash = deployResult.txHash
-
-      // Update stablecoin with contract address
-      await supabase
-        .from("stablecoins")
-        .update({
-          erc20_address: erc20Address,
-          status: "deployed",
-          deployed_at: new Date().toISOString(),
-        })
-        .eq("stablecoin_id", stablecoin.stablecoin_id)
+      txHash = transferResult.hash
 
       await publishEvent(
-        createDomainEvent(stablecoin.stablecoin_id, "stablecoin.deployed", {
+        createDomainEvent(stablecoin.stablecoin_id, "stablecoin.first_deposit_transferred", {
           symbol: stablecoin.symbol,
           erc20Address,
           txHash,
+          amount: operation.amount,
         })
       )
     } else {
-      // Mint tokens to existing contract
-      await log.info("Minting tokens to existing contract", {
+      // Subsequent deposits - transfer tokens from owner to client wallet
+      await log.info("Subsequent deposit - transferring tokens from owner to client", {
         symbol: stablecoin.symbol,
         erc20Address,
+        amount: operation.amount,
       })
 
-      const mintResult = await blockchain.mintTokens(
+      const transferResult = await blockchain.transferTokens(
         erc20Address,
         stablecoin.client_wallet,
         operation.amount
       )
 
-      txHash = mintResult.hash
+      txHash = transferResult.hash
     }
 
     // Update operation with transaction details

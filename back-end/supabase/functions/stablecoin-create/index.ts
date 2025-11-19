@@ -86,23 +86,34 @@ serve(async (req: Request) => {
 
     // Deploy ERC20 via factory contract
     let erc20Address: string
+    let deployTxHash: string
+    let deployBlockNumber: number
 
     try {
-      await log.info("Deploying ERC20 contract on blockchain", { symbol, decimals: 18 })
+      await log.info("Deploying ERC20 contract on blockchain", { symbol, decimals: 18, totalSupply: total_supply })
       const blockchainClient = createBlockchainClient()
-      erc20Address = await blockchainClient.createStablecoin(
+      const deployResult = await blockchainClient.createStablecoin(
         client_name,
         symbol,
-        18 // decimals
+        18, // decimals
+        total_supply // totalSupply - mints all tokens to owner
       )
 
-      await log.info("ERC20 deployed successfully", {
+      erc20Address = deployResult.address
+      deployTxHash = deployResult.txHash
+      deployBlockNumber = deployResult.blockNumber
+
+      await log.info("ERC20 deployed successfully with total supply", {
         erc20Address,
         symbol,
+        totalSupply: total_supply,
+        txHash: deployTxHash,
+        blockNumber: deployBlockNumber,
       })
     } catch (err) {
       await log.error("Failed to deploy ERC20 contract", {
         symbol,
+        totalSupply: total_supply,
         error: (err as Error).message,
       }, err as Error)
       throw err
@@ -117,6 +128,7 @@ serve(async (req: Request) => {
       webhook_url: webhook,
       symbol,
       erc20_address: erc20Address,
+      total_supply,
       status: "deployed",
       deployed_at: new Date().toISOString(),
     })

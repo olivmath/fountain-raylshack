@@ -51,6 +51,20 @@ const FACTORY_ABI = [
   },
 ]
 
+// ERC20 ABI for transfer function
+const ERC20_ABI = [
+  {
+    name: "transfer",
+    type: "function",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "nonpayable",
+  },
+]
+
 export class BlockchainClient {
   private publicClient: PublicClient
   private walletClient: WalletClient
@@ -94,24 +108,27 @@ export class BlockchainClient {
   async createStablecoin(
     name: string,
     symbol: string,
-    decimals: number = 18
-  ): Promise<string> {
+    decimals: number = 18,
+    totalSupply: number = 0
+  ): Promise<{ address: string; txHash: string; blockNumber: number }> {
     try {
       await logger.debug("Creating stablecoin on blockchain", {
         name,
         symbol,
         decimals,
+        totalSupply,
       })
 
       console.log("[BlockchainClient] createStablecoin called", {
         name,
         symbol,
         decimals,
+        totalSupply,
         factoryAddress: this.factoryAddress,
         chainId: this.chainId,
       })
 
-      // Execute transaction with explicit gas settings
+      // Step 1: Deploy stablecoin contract
       console.log("[BlockchainClient] Calling writeContract with args:", [name, symbol, decimals])
       let hash: string
       try {
@@ -188,8 +205,76 @@ export class BlockchainClient {
         throw new Error("Could not extract token address from transaction receipt")
       }
 
-      console.log("[BlockchainClient] Returning token address:", tokenAddress)
-      return tokenAddress
+      console.log("[BlockchainClient] Token deployed at address:", tokenAddress)
+
+      // Step 2: Mint totalSupply to owner if specified
+      let finalBlockNumber = Number(receipt.blockNumber)
+
+      if (totalSupply > 0) {
+        console.log("[BlockchainClient] Minting total supply to owner:", {
+          tokenAddress,
+          totalSupply,
+          owner: this.ownerAddress,
+        })
+
+        const amountWei = parseUnits(totalSupply.toString(), 18)
+        let mintHash: string
+
+        try {
+          mintHash = await this.walletClient.writeContract({
+            address: this.factoryAddress as `0x${string}`,
+            abi: FACTORY_ABI,
+            functionName: "mintTokens",
+            args: [
+              tokenAddress as `0x${string}`,
+              this.ownerAddress as `0x${string}`,
+              amountWei,
+            ],
+            gas: 3000000n,
+            maxFeePerGas: parseUnits("100", "gwei"),
+            maxPriorityFeePerGas: parseUnits("10", "gwei"),
+          })
+
+          console.log("[BlockchainClient] Mint transaction hash:", mintHash)
+
+          const mintReceipt = await this.publicClient.waitForTransactionReceipt({ hash: mintHash })
+
+          if (mintReceipt.status !== "success") {
+            throw new Error("Mint transaction failed")
+          }
+
+          console.log("[BlockchainClient] Mint completed successfully", {
+            txHash: mintHash,
+            blockNumber: mintReceipt.blockNumber.toString(),
+          })
+
+          finalBlockNumber = Number(mintReceipt.blockNumber)
+
+          await logger.info("Total supply minted to owner", {
+            tokenAddress,
+            amount: totalSupply,
+            txHash: mintHash,
+            blockNumber: finalBlockNumber,
+          })
+        } catch (mintErr) {
+          const errMsg = mintErr instanceof Error ? mintErr.message : String(mintErr)
+          console.error("[BlockchainClient] Mint failed:", errMsg)
+          await logger.error("Error minting total supply", { tokenAddress, totalSupply, error: errMsg }, mintErr as Error)
+          throw mintErr
+        }
+      }
+
+      console.log("[BlockchainClient] Returning deployment result:", {
+        address: tokenAddress,
+        txHash: hash,
+        blockNumber: finalBlockNumber,
+      })
+
+      return {
+        address: tokenAddress,
+        txHash: hash,
+        blockNumber: finalBlockNumber,
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err)
       const errorStack = err instanceof Error ? err.stack : "No stack trace"
@@ -366,6 +451,87 @@ export class BlockchainClient {
       throw new AppError(
         ErrorCode.BLOCKCHAIN_ERROR,
         "Failed to burn tokens",
+        500
+      )
+    }
+  }
+
+  async transferTokens(
+    erc20Address: string,
+    toAddress: string,
+    amount: number
+  ): Promise<TransactionResult> {
+    try {
+      await logger.debug("Transferring tokens on blockchain", {
+        erc20Address,
+        toAddress,
+        amount,
+      })
+
+      const amountWei = parseUnits(amount.toString(), 18)
+
+      console.log("[BlockchainClient] transferTokens called", {
+        erc20Address,
+        toAddress,
+        amount,
+      })
+
+      const hash = await this.walletClient.writeContract({
+        address: erc20Address as `0x${string}`,
+        abi: ERC20_ABI,
+        functionName: "transfer",
+        args: [toAddress as `0x${string}`, amountWei],
+        gas: 100000n,
+        maxFeePerGas: parseUnits("100", "gwei"),
+        maxPriorityFeePerGas: parseUnits("10", "gwei"),
+      })
+
+      console.log("[BlockchainClient] Transfer transaction hash:", hash)
+
+      await logger.info("Transfer transaction sent", {
+        txHash: hash,
+        erc20Address,
+        toAddress,
+        amount,
+      })
+
+      const receipt = await this.publicClient.waitForTransactionReceipt({ hash })
+
+      if (receipt.status !== "success") {
+        throw new AppError(
+          ErrorCode.BLOCKCHAIN_ERROR,
+          "Transfer transaction failed",
+          500
+        )
+      }
+
+      await logger.info("Tokens transferred successfully", {
+        txHash: hash,
+        erc20Address,
+        toAddress,
+        amount,
+        blockNumber: receipt.blockNumber.toString(),
+      })
+
+      return {
+        hash,
+        blockNumber: Number(receipt.blockNumber),
+        status: "success",
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      const errorStack = err instanceof Error ? err.stack : "No stack trace"
+
+      console.error("[BlockchainClient] ERROR in transferTokens:", {
+        message: errorMessage,
+        stack: errorStack,
+      })
+
+      if (err instanceof AppError) throw err
+      await logger.error("Error transferring tokens", { errorMessage }, err as Error)
+      throw new AppError(
+        ErrorCode.BLOCKCHAIN_ERROR,
+        "Failed to transfer tokens",
         500
       )
     }
